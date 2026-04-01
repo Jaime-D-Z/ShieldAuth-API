@@ -114,7 +114,7 @@ Estructura actual:
 1. Clonar repositorio
 
 ```bash
-git clone <TU_REPO>
+git clone https://github.com/Jaime-D-Z/ShieldAuth-API
 cd AUTH
 ```
 
