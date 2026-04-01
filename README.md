@@ -1,81 +1,194 @@
 # ShieldAuth API
 
-API de autenticacion enterprise construida con Node.js, TypeScript, Express, Prisma, PostgreSQL y Redis.
+![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=nodedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## Caracteristicas
+## 1. Descripcion Del Proyecto
 
-- Arquitectura por capas: Route -> Middleware -> Controller -> Service -> Repository
-- Login, Register, Refresh y Logout
-- JWT Access Token + Refresh Token rotado
-- Refresh token guardado en Redis como hash + jti
-- Revocacion de sesiones en Redis
-- Rate limiting por IP
-- Validaciones con Zod
-- Manejo centralizado de errores con AppError
-- Audit log de eventos de autenticacion en PostgreSQL
+ShieldAuth API es una API REST de autenticacion de nivel enterprise enfocada en seguridad, trazabilidad y escalabilidad.
 
-## Stack
+Esta API implementa autenticacion moderna con Access Token + Refresh Token rotado, revocacion de sesiones en Redis y auditoria de eventos criticos en PostgreSQL.
+
+Tipo de proyecto: API REST (backend)
+
+Publico objetivo:
+
+- Equipos backend que necesitan un modulo de autenticacion robusto para aplicaciones web y moviles.
+- Proyectos SaaS o sistemas internos que requieren control de sesiones y auditabilidad.
+
+Estado actual del proyecto: En desarrollo avanzado (listo para entorno de pruebas y pre-produccion).
+
+## 2. Caracteristicas Principales
+
+- Registro de usuarios con validacion estricta y hash de password con bcrypt (salt rounds: 12).
+- Login seguro con emision de Access Token y Refresh Token en cookie HttpOnly.
+- Renovacion de sesion mediante endpoint de refresh con rotacion de refresh token.
+- Logout con revocacion de sesion en Redis.
+- Rate limiting por IP en endpoints sensibles (register/login).
+- Validaciones de entrada con Zod.
+- Manejo centralizado de errores con AppError + middleware global.
+- Audit Log en PostgreSQL para eventos de autenticacion.
+
+## 3. Tecnologias Utilizadas
 
 - Node.js 20+
-- TypeScript
+- TypeScript (modo estricto)
 - Express 5
 - Prisma ORM
 - PostgreSQL
-- Redis
+- Redis (ioredis)
+- JWT (jsonwebtoken)
+- Zod
+- Docker y Docker Compose
+- GitHub Actions (CI/CD)
 
-## Variables de entorno
+## 4. Arquitectura Y Estructura Del Proyecto
 
-Usa como referencia el archivo .env.example.
+Arquitectura de capas aplicada:
 
-Variables obligatorias:
+Route -> Middleware -> Controller -> Service -> Repository -> Prisma
 
-- NODE_ENV
-- PORT
-- DATABASE_URL
-- REDIS_URL
-- JWT_SECRET
-- JWT_REFRESH_SECRET
-- CLIENT_URL
+Estructura actual:
 
-## Ejecucion local
+```text
+.
+├─ .github/
+│  └─ workflows/
+│     └─ ci-cd.yml
+├─ prisma/
+│  └─ schema.prisma
+├─ src/
+│  ├─ app.ts
+│  ├─ server.ts
+│  ├─ config/
+│  │  ├─ database.ts
+│  │  ├─ env.ts
+│  │  └─ redis.ts
+│  ├─ middleware/
+│  │  ├─ authenticate.ts
+│  │  ├─ authorize.ts
+│  │  ├─ errorHandler.ts
+│  │  └─ rateLimit.ts
+│  ├─ modules/
+│  │  ├─ auth/
+│  │  │  ├─ audit.repository.ts
+│  │  │  ├─ audit.service.ts
+│  │  │  ├─ auth.controller.ts
+│  │  │  ├─ auth.routes.ts
+│  │  │  ├─ auth.schema.ts
+│  │  │  ├─ auth.service.ts
+│  │  │  └─ token.service.ts
+│  │  └─ users/
+│  │     ├─ user.controller.ts
+│  │     ├─ user.entity.ts
+│  │     ├─ user.repository.ts
+│  │     └─ user.service.ts
+│  └─ shared/
+│     ├─ errors/
+│     │  └─ AppError.ts
+│     ├─ types/
+│     │  └─ express.d.ts
+│     └─ utils/
+├─ .env.example
+├─ Dockerfile
+├─ docker-compose.prod.yml
+├─ package.json
+└─ tsconfig.json
+```
 
-1. Instalar dependencias:
+## 5. Instalacion Paso A Paso
+
+### Requisitos
+
+- Node.js 20+
+- PostgreSQL disponible
+- Redis disponible
+
+### Setup local
+
+1. Clonar repositorio
+
+```bash
+git clone <TU_REPO>
+cd AUTH
+```
+
+2. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-2. Configurar .env (puedes copiar de .env.example)
+3. Configurar variables de entorno
 
-3. Levantar PostgreSQL y Redis
+```bash
+cp .env.example .env
+```
 
-4. Generar cliente Prisma:
+En Windows (PowerShell), si no tienes cp:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+4. Generar Prisma Client
 
 ```bash
 npm run prisma:generate
 ```
 
-5. Sincronizar esquema (si no usas migraciones todavia):
+5. Sincronizar esquema con la base de datos
 
 ```bash
 npx prisma db push
 ```
 
-6. Iniciar API en desarrollo:
+6. Ejecutar en modo desarrollo
 
 ```bash
 npm run dev
 ```
 
-La API queda disponible en:
+Base URL:
 
 - http://localhost:3000/api/v1/auth
 
-## Endpoints de autenticacion
+## 6. Configuracion De Variables De Entorno
 
-### POST /api/v1/auth/register
+Ejemplo de archivo .env:
 
-Body JSON:
+```dotenv
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=postgresql://user:password@localhost:5432/auth_db
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=replace_with_a_very_long_secure_access_secret
+JWT_REFRESH_SECRET=replace_with_a_very_long_secure_refresh_secret
+CLIENT_URL=http://localhost:3000
+```
+
+Descripcion de variables:
+
+- NODE_ENV: entorno de ejecucion (development, test, production)
+- PORT: puerto de la API
+- DATABASE_URL: conexion PostgreSQL para Prisma
+- REDIS_URL: conexion Redis para sesiones/rate-limit
+- JWT_SECRET: secreto para firmar Access Token
+- JWT_REFRESH_SECRET: secreto para firmar Refresh Token
+- CLIENT_URL: origen permitido en CORS
+
+## 7. Uso Del Sistema (API)
+
+### Endpoint: Register
+
+POST /api/v1/auth/register
+
+Body:
 
 ```json
 {
@@ -85,15 +198,26 @@ Body JSON:
 }
 ```
 
-Reglas de validacion:
+Respuesta esperada (201):
 
-- email valido
-- password con minimo 8 caracteres, mayuscula, minuscula, numero y simbolo
-- name obligatorio
+```json
+{
+  "user": {
+    "id": "6d0f0c2a-95d8-4f94-8d86-3432e2df6f3f",
+    "email": "nuevo.usuario@example.com",
+    "name": "Nuevo Usuario",
+    "role": "USER",
+    "createdAt": "2026-04-01T12:00:00.000Z",
+    "updatedAt": "2026-04-01T12:00:00.000Z"
+  }
+}
+```
 
-### POST /api/v1/auth/login
+### Endpoint: Login
 
-Body JSON:
+POST /api/v1/auth/login
+
+Body:
 
 ```json
 {
@@ -102,129 +226,117 @@ Body JSON:
 }
 ```
 
-Respuesta:
+Respuesta esperada (200):
 
-- accessToken en body
-- refresh_token en cookie httpOnly
+```json
+{
+  "accessToken": "<jwt_access_token>"
+}
+```
 
-### POST /api/v1/auth/refresh
+Adicional:
 
-- Sin body
-- Requiere cookie refresh_token
-- Devuelve nuevo accessToken y rota refresh token
+- Se envia cookie HttpOnly llamada refresh_token.
 
-### POST /api/v1/auth/logout
+### Endpoint: Refresh
 
-Headers:
+POST /api/v1/auth/refresh
+
+- Sin body.
+- Requiere cookie refresh_token.
+- Devuelve nuevo accessToken y rota refresh token.
+
+### Endpoint: Logout
+
+POST /api/v1/auth/logout
+
+Header requerido:
 
 ```text
 Authorization: Bearer <accessToken>
 ```
 
-- Borra cookie refresh_token
-- Revoca sesion en Redis
+Comportamiento:
 
-## Produccion con Docker Compose
+- Revoca refresh token en Redis.
+- Limpia cookie refresh_token.
+- Responde 204.
 
-Archivo incluido:
+## 8. Estructura De La Base De Datos
 
-- docker-compose.prod.yml
+Tablas principales (Prisma):
 
-Incluye 3 servicios:
+### User
 
-- postgres
-- redis
-- api
+- id (UUID, PK)
+- email (unique)
+- name (nullable)
+- password (hash)
+- role (enum: USER, ADMIN, MANAGER)
+- createdAt
+- updatedAt
 
-### Levantar entorno
+### AuditLog
+
+- id (UUID, PK)
+- action (ej: LOGIN_SUCCESS, USER_REGISTERED)
+- ip
+- userId (FK opcional a User)
+- createdAt
+
+Relacion:
+
+- Un usuario puede tener muchos logs de auditoria.
+
+## 9. Buenas Practicas Y Decisiones Tecnicas
+
+- Separo responsabilidades por capas para mantener mantenibilidad y testabilidad.
+- Uso Zod para validar input en bordes (controller).
+- Uso AppError para errores de negocio y middleware global para serializacion uniforme.
+- Guardo hash del refresh token en Redis para evitar almacenar token plano.
+- Roto refresh token en cada refresh para reducir riesgo de replay.
+- Aplico rate limiting en endpoints de alto riesgo (register/login).
+
+Supuestos razonables aplicados:
+
+- El frontend usa cookie HttpOnly para refresh y Bearer token para endpoints protegidos.
+- Para entornos enterprise se recomienda migrar de prisma db push a prisma migrate en CI/CD.
+
+## 10. Roadmap
+
+- [ ] Recuperacion de password por email.
+- [ ] Verificacion de email en registro.
+- [ ] MFA (TOTP o WebAuthn).
+- [ ] Lista de revocacion de Access Tokens para casos criticos.
+- [ ] Tests automatizados (unit, integration, e2e).
+- [ ] Observabilidad (OpenTelemetry + trazas distribuidas).
+
+## 11. Contribucion
+
+1. Haz fork del repositorio.
+2. Crea una rama de feature: feature/mi-mejora.
+3. Realiza cambios con commits claros.
+4. Abre un Pull Request hacia main.
+
+Recomendaciones:
+
+- Ejecutar npm run build antes de enviar PR.
+- Mantener compatibilidad con TypeScript estricto.
+- Documentar cambios de contrato API en este README.
+
+## 12. Licencia
+
+MIT
+
+## 13. Despliegue Rapido Con Docker Compose (Produccion)
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
-```
-
-### Ver logs de la API
-
-```bash
 docker compose -f docker-compose.prod.yml logs -f api
 ```
 
-### Detener entorno
+Incluye:
 
-```bash
-docker compose -f docker-compose.prod.yml down
-```
-
-## CI/CD con GitHub Actions
-
-Se incluye el workflow:
-
-- .github/workflows/ci-cd.yml
-
-Este pipeline hace lo siguiente:
-
-1. En Pull Request a main:
-- npm ci
-- prisma generate
-- build TypeScript
-
-2. En push a main o tags v*:
-- ejecuta CI
-- construye imagen Docker
-- publica en GHCR
-
-Imagen publicada en:
-
-- ghcr.io/<owner>/<repo>:latest (si es branch principal)
-- ghcr.io/<owner>/<repo>:<sha>
-- ghcr.io/<owner>/<repo>:<tag> (si es release/tag)
-
-### Requisitos para publicar imagen
-
-1. El repositorio debe estar en GitHub.
-2. GitHub Packages habilitado (GHCR).
-3. Permisos del workflow: packages:write (ya definidos en el yaml).
-
-### Como usar la imagen en un servidor
-
-```bash
-docker pull ghcr.io/<owner>/<repo>:latest
-docker run -d \
-  --name shieldauth-api \
-  -p 3000:3000 \
-  -e NODE_ENV=production \
-  -e PORT=3000 \
-  -e DATABASE_URL='postgresql://user:pass@host:5432/db?schema=public' \
-  -e REDIS_URL='redis://host:6379' \
-  -e JWT_SECRET='super_long_access_secret' \
-  -e JWT_REFRESH_SECRET='super_long_refresh_secret' \
-  -e CLIENT_URL='https://tu-frontend.com' \
-  ghcr.io/<owner>/<repo>:latest
-```
-
-## Seguridad recomendada para produccion
-
-- Cambiar JWT_SECRET y JWT_REFRESH_SECRET por valores largos y aleatorios
-- No exponer puertos de PostgreSQL/Redis si no es necesario
-- Ajustar CLIENT_URL al dominio real del frontend
-- Usar HTTPS para secure cookies
-- Implementar migraciones Prisma versionadas (prisma migrate) en lugar de db push
-
-## Estructura resumida
-
-```text
-src/
-  app.ts
-  server.ts
-  config/
-  middleware/
-  modules/
-    auth/
-    users/
-  shared/
-prisma/
-  schema.prisma
-```
-
-## Licencia
-
-MIT
+- api
+- postgres
+- redis
